@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Juegos tradicionales de Honduras — Mini colección</title>
+  <style>
+    :root{
+      --bg:#0f172a;         /* slate-900 */
+      --panel:#111827ee;    /* gray-900 */
+      --card:#1f2937;       /* gray-800 */
+      --muted:#94a3b8;      /* slate-400 */
+      --accent:#22c55e;     /* green-500 */
+      --accent-2:#eab308;   /* yellow-500 */
+      --danger:#ef4444;     /* red-500 */
+      --white:#ffffff;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial;
+      background: radial-gradient(1000px 700px at 80% -10%, #0b1224 0%, var(--bg) 45%), #0b1224;
+      color: var(--white);
+    }
+
+    header{
+      padding:24px 16px; text-align:center;
+    }
+    .title{font-weight:800; font-size:clamp(22px, 4vw, 32px); letter-spacing:.3px}
+    .subtitle{color:var(--muted); margin-top:6px; font-size:clamp(13px, 2vw, 15px)}
+
+    .app{
+      max-width:1100px; margin:0 auto; padding: 8px 16px 32px;
+      display:grid; grid-template-columns: 270px 1fr; gap:18px;
+    }
+    @media (max-width: 900px){
+      .app{grid-template-columns:1fr}
+    }
+
+    .sidebar{
+      background: linear-gradient(180deg, #0d1326 0%, #0b1020 100%);
+      border:1px solid #223; border-radius:18px; padding:14px; position:sticky; top:10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      height:max-content;
+    }
+    .sidebar h2{font-size:16px; margin:4px 6px 10px; color:#cbd5e1; font-weight:700}
+    .menu{display:flex; flex-direction:column; gap:10px}
+    .btn{
+      appearance:none; border:1px solid #293145; background: #0f152b; color:#e5e7eb;
+      padding:12px 14px; border-radius:14px; font-weight:700; cursor:pointer; text-align:left;
+      transition:.15s transform, .2s background, .2s border-color, .2s box-shadow;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .btn:hover{transform:translateY(-2px); border-color:#3a4564; box-shadow:0 8px 16px rgba(0,0,0,.25)}
+    .btn.active{background:linear-gradient(180deg, #15214b, #0f1a40); border-color:#5066c9; box-shadow: inset 0 0 0 1px #5066c9}
+    .pill{font-size:11px; padding:4px 8px; border-radius:999px; background:#111827; border:1px solid #26314b; color:#cbd5e1}
+
+    .content{background: linear-gradient(180deg, #0e142e, #0c1327); border:1px solid #223; border-radius:18px; padding:18px; box-shadow: 0 10px 30px rgba(0,0,0,.25)}
+
+    .game{display:none}
+    .game.active{display:block}
+
+    .card{background:var(--card); border:1px solid #2b364f; border-radius:16px; padding:14px; box-shadow: inset 0 0 0 1px #2b364f}
+    .row{display:flex; flex-wrap:wrap; gap:14px}
+
+    .panel{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+    .panel .info{color:var(--muted); font-size:14px}
+    .panel .tag{background:#0e162f; padding:6px 10px; border-radius:999px; border:1px solid #2b364f; font-weight:700}
+
+    .kbd{background:#0e1a35; border:1px solid #31406b; padding:2px 8px; border-radius:6px; font-weight:800; font-size:12px}
+    .rules{color:#cbd5e1; line-height:1.5}
+
+    /* --- GAME-SPECIFIC --- */
+    /* Trompo */
+    #trompoCanvas{background:radial-gradient(220px 160px at 50% -30%, #1b2750, #0b132b); width:100%; max-width:580px; aspect-ratio: 4/3; border-radius:16px; border:1px solid #2b364f}
+    .gauge{height:14px; background:#0c142d; border-radius:999px; overflow:hidden; border:1px solid #2b364f}
+    .gauge > div{height:100%; width:0%; background: linear-gradient(90deg, var(--accent), #16a34a); transition: width .1s}
+
+    /* Rayuela */
+    #rayuelaBoard{ display:grid; grid-template-columns: repeat(3, 90px); grid-template-rows: repeat(4, 90px); gap:8px; user-select:none }
+    #rayuelaBoard .cell{ width:90px; height:90px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:22px; border-radius:12px; border:2px dashed #3b496f; background:#0c142d; color:#e5e7eb; position:relative }
+    #rayuelaBoard .stone{position:absolute; width:18px; height:18px; border-radius:50%; background:var(--accent-2); top:6px; right:6px; box-shadow:0 0 0 2px #1f2937}
+    #rayuelaBoard .player{position:absolute; width:20px; height:20px; border-radius:50%; background:#60a5fa; bottom:6px; left:6px; box-shadow:0 0 0 2px #1f2937}
+
+    /* Canicas */
+    #canicasArea{ position:relative; width:min(620px, 95%); aspect-ratio: 16/9; background: radial-gradient(600px 260px at 50% -10%, #1a2a58, #0a1226); border:1px solid #2b364f; border-radius:16px; overflow:hidden }
+    #canicasHole{ position:absolute; width:60px; height:60px; border-radius:50%; border:3px solid #111827; background:#0b132b; box-shadow: inset 0 0 12px rgba(0,0,0,.7) }
+    #canicasMarble{ position:absolute; width:34px; height:34px; border-radius:50%; background: radial-gradient(circle at 30% 30%, #d1d5db, #8a97b3); border:2px solid #1f2937; cursor:grab }
+
+    /* Balero */
+    #balero{ display:flex; gap:18px; align-items:center; flex-wrap:wrap }
+    .meter{ width: 360px; max-width:95vw; height: 24px; border-radius:999px; background:#0d1531; border:1px solid #2b364f; overflow:hidden; position:relative }
+    .meter .zone{ position:absolute; height:100%; top:0 }
+    .meter .zone.good{ background: rgba(34,197,94,.25) }
+    .meter .zone.ok{ background: rgba(234,179,8,.2) }
+    .meter .zone.bad{ background: rgba(239,68,68,.2) }
+    .meter .marker{ position:absolute; top:0; width:6px; height:100%; background:#93c5fd }
+
+    .score{font-weight:800}
+    .small{font-size:12px; color:var(--muted)}
+    .grid{display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px}
+    .footer{margin-top:26px; color:#9ca3af; font-size:12px}
+    a{color:#93c5fd}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title"><strong>Juegos tradicionales de Honduras</strong> — colección web y Teléfono Móvil</div>
+    <div class="subtitle">Incluye Trompo, Rayuela, Canicas y Balero (Capirucho). Diseñado para teclado, ratón o tacto.</div>
+  </header>
+
+  <main class="app">
+    <aside class="sidebar">
+      <h2>Selecciona un juego</h2>
+      <nav class="menu" id="menu"></nav>
+      <div class="footer">Consejo: cada juego muestra <strong>reglas e instrucciones</strong> dentro del panel superior.
+      <br/>Diversión sin límites.</div>
+    </aside>
+
+    <section class="content">
+      <!-- Trompo -->
+      <article class="game active" id="game-trompo">
+        <div class="row">
+          <div class="card" style="flex:1 1 380px">
+            <h3 style="margin:6px 0 10px">Trompo — <span class="small">mantén el giro</span></h3>
+            <div class="panel" style="margin-bottom:10px">
+              <span class="tag">Click / Toques rítmicos para impulsar</span>
+              <span class="info">No dejes que la energía baje a 0%</span>
+            </div>
+            <canvas id="trompoCanvas" width="580" height="435" aria-label="Lienzo trompo"></canvas>
+            <div style="margin:12px 0 6px" class="gauge" title="Energía del trompo"><div id="trompoEnergy"></div></div>
+            <div class="panel" style="justify-content:space-between">
+              <div>
+                <span class="tag">Tiempo: <span id="trompoTime" class="score">0.0s</span></span>
+                <span class="tag">Récord: <span id="trompoBest" class="score">0.0s</span></span>
+              </div>
+              <button class="btn" id="trompoStart">Reiniciar</button>
+            </div>
+          </div>
+          <div class="card" style="flex:1 1 260px">
+            <h3 style="margin:6px 0 10px">Reglas</h3>
+            <ol class="rules">
+              <li>Haz <strong>clicks o toques</strong> sobre el lienzo para impulsar el trompo.</li>
+              <li>La <strong>energía</strong> cae con el tiempo; si llega a 0%, el trompo cae y termina la partida.</li>
+              <li>Tu puntaje es el <strong>tiempo de giro</strong>. ¡Rompe tu récord!</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- Rayuela -->
+      <article class="game" id="game-rayuela">
+        <div class="grid">
+          <div class="card">
+            <h3 style="margin:6px 0 10px">Rayuela — <span class="small">salta del 1 al 10</span></h3>
+            <div class="panel" style="margin-bottom:10px">
+              <span class="tag">Usa <span class="kbd">←</span><span class="kbd">→</span><span class="kbd">↑</span><span class="kbd">↓</span> / tacto</span>
+              <span class="info">Evita el cuadro con la <strong>piedra</strong>.</span>
+            </div>
+            <div id="rayuelaBoard" aria-label="Tablero de rayuela"></div>
+            <div class="panel" style="margin-top:10px; justify-content:space-between">
+              <div>
+                <span class="tag">Objetivo: <span id="rayuelaGoal" class="score">1 → 10</span></span>
+                <span class="tag">Intentos: <span id="rayuelaLives" class="score">3</span></span>
+              </div>
+              <button class="btn" id="rayuelaStart">Nueva partida</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="margin:6px 0 10px">Reglas</h3>
+            <ul class="rules">
+              <li>Se coloca una <strong>piedra</strong> (amarilla) en un número aleatorio.</li>
+              <li>Muévete por los números <strong>en orden</strong> del 1 al 10 sin pisar el cuadro con piedra.</li>
+              <li>Si tocas la piedra o sales del tablero, <strong>pierdes un intento</strong>.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <!-- Canicas -->
+      <article class="game" id="game-canicas">
+        <div class="row">
+          <div class="card" style="flex: 2 1 420px">
+            <h3 style="margin:6px 0 10px">Canicas — <span class="small">apunta al hoyo</span></h3>
+            <div class="panel" style="margin-bottom:10px">
+              <span class="tag">Arrastra y suelta la canica para disparar</span>
+              <span class="info">Tienes 3 tiros por ronda</span>
+            </div>
+            <div id="canicasArea">
+              <div id="canicasHole"></div>
+              <div id="canicasMarble" draggable="false"></div>
+            </div>
+            <div class="panel" style="margin-top:10px; justify-content:space-between">
+              <div>
+                <span class="tag">Puntos: <span id="canicasScore" class="score">0</span></span>
+                <span class="tag">Tiros: <span id="canicasShots" class="score">3</span></span>
+              </div>
+              <button class="btn" id="canicasStart">Reiniciar</button>
+            </div>
+          </div>
+          <div class="card" style="flex:1 1 260px">
+            <h3 style="margin:6px 0 10px">Reglas</h3>
+            <ul class="rules">
+              <li>Coloca el dedo o el ratón sobre la canica, <strong>arrastra hacia atrás</strong> para tomar fuerza y suelta.</li>
+              <li>Si la canica entra en el <strong>hoyo</strong>, sumas 1 punto.</li>
+              <li>La canica se frena por fricción. ¡Calcula bien la fuerza y el ángulo!</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <!-- Balero / Capirucho -->
+      <article class="game" id="game-balero">
+        <div class="grid">
+          <div class="card">
+            <h3 style="margin:6px 0 10px">Balero (Capirucho) — <span class="small">timing</span></h3>
+            <div class="panel" style="margin-bottom:10px">
+              <span class="tag">Pulsa <span class="kbd">ESPACIO</span> o <strong>toca</strong> el botón cuando el marcador esté en verde</span>
+            </div>
+            <div id="balero" class="panel">
+              <div class="meter" id="baleroMeter">
+                <div class="zone good" style="left:40%; width:20%"></div>
+                <div class="zone ok" style="left:25%; width:15%"></div>
+                <div class="zone ok" style="left:60%; width:15%"></div>
+                <div class="zone bad" style="left:0%; width:25%"></div>
+                <div class="zone bad" style="left:80%; width:20%"></div>
+                <div class="marker" id="baleroMarker" style="left:0%"></div>
+              </div>
+              <button class="btn" id="baleroShoot">Lanzar</button>
+            </div>
+            <div class="panel" style="justify-content:space-between; margin-top:10px">
+              <div>
+                <span class="tag">Aciertos: <span id="baleroHits" class="score">0</span></span>
+                <span class="tag">Racha: <span id="baleroStreak" class="score">0</span></span>
+              </div>
+              <button class="btn" id="baleroStart">Reiniciar</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="margin:6px 0 10px">Reglas</h3>
+            <ul class="rules">
+              <li>El marcador se mueve de izquierda a derecha.</li>
+              <li>Presiona <strong>cuando el marcador esté en la zona verde</strong> para encestar el balero (acierto).</li>
+              <li>Zona amarilla = medio punto moral; roja = fallo.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+    </section>
+  </main>
+
+  <script>
+    // ------- Navegación entre juegos -------
+    const GAMES = [
+      { id: 'trompo', label: 'Trompo', badge: 'Reflejos' },
+      { id: 'rayuela', label: 'Rayuela', badge: 'Lógico' },
+      { id: 'canicas', label: 'Canicas', badge: 'Precisión' },
+      { id: 'balero', label: 'Balero', badge: 'Timing' },
+    ];
+    const menu = document.getElementById('menu');
+    const content = document.querySelector('.content');
+
+    GAMES.forEach((g, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'btn' + (i===0 ? ' active' : '');
+      btn.dataset.target = g.id;
+      btn.innerHTML = `<span>🎮 <strong>${g.label}</strong></span><span class="pill">${g.badge}</span>`;
+      btn.addEventListener('click', () => selectGame(g.id));
+      menu.appendChild(btn);
+    });
+
+    function selectGame(id){
+      document.querySelectorAll('.btn').forEach(b=>{
+        b.classList.toggle('active', b.dataset.target === id);
+      });
+      document.querySelectorAll('.game').forEach(el=>{
+        el.classList.toggle('active', el.id === 'game-'+id);
+      });
+    }
+
+    // ======= JUEGO: TROMPO =======
+    (function(){
+      const canvas = document.getElementById('trompoCanvas');
+      const ctx = canvas.getContext('2d');
+      const energyBar = document.getElementById('trompoEnergy');
+      const timeEl = document.getElementById('trompoTime');
+      const bestEl = document.getElementById('trompoBest');
+      const startBtn = document.getElementById('trompoStart');
+
+      let running = false, startTime=0, elapsed=0, best=0;
+      let energy = 50; // 0-100
+      let angle = 0; // rad
+      let spin = 0.12; // rad/frame; affected by energy
+
+      function drawTop(){
+        ctx.clearRect(0,0,canvas.width, canvas.height);
+        const cx = canvas.width/2, cy = canvas.height/2 + 30;
+        const size = 120;
+        // sombra
+        ctx.fillStyle = 'rgba(0,0,0,.35)';
+        ctx.beginPath(); ctx.ellipse(cx, cy+size*0.9, size*0.9, 18, 0, 0, Math.PI*2); ctx.fill();
+        // cuerpo
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+        const grad = ctx.createLinearGradient(-size, -size, size, size);
+        grad.addColorStop(0, '#60a5fa');
+        grad.addColorStop(1, '#3b82f6');
+        ctx.fillStyle = grad;
+        ctx.strokeStyle = '#1e3a8a';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, -size*0.9);
+        ctx.bezierCurveTo(size*0.7, -size*0.7, size*0.6, size*0.3, 0, size);
+        ctx.bezierCurveTo(-size*0.6, size*0.3, -size*0.7, -size*0.7, 0, -size*0.9);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        // punta
+        ctx.fillStyle = '#fde68a';
+        ctx.beginPath(); ctx.moveTo(0, size); ctx.lineTo(8, size+20); ctx.lineTo(-8, size+20); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+
+      function loop(){
+        if(!running) return;
+        // decay de energía
+        energy -= 0.08; if(energy<0) energy=0;
+        // spin depende de energía
+        spin = 0.03 + (energy/100)*0.2;
+        angle += spin;
+        drawTop();
+        energyBar.style.width = energy + '%';
+        elapsed = (performance.now() - startTime)/1000;
+        timeEl.textContent = elapsed.toFixed(1) + 's';
+        if(energy <= 0){
+          running = false;
+          best = Math.max(best, elapsed);
+          bestEl.textContent = best.toFixed(1) + 's';
+          // caída visual
+          ctx.save();
+          ctx.translate(canvas.width/2, canvas.height/2+30);
+          ctx.rotate(Math.PI/6);
+          ctx.fillStyle = 'rgba(239,68,68,.6)';
+          ctx.fillRect(-140, -12, 280, 24);
+          ctx.restore();
+          return;
+        }
+        requestAnimationFrame(loop);
+      }
+
+      function start(){
+        running = true; energy = 60; startTime = performance.now(); elapsed=0; angle=0;
+        energyBar.style.width = energy + '%';
+        drawTop();
+        requestAnimationFrame(loop);
+      }
+
+      canvas.addEventListener('pointerdown', ()=>{
+        if(!running) start();
+        energy = Math.min(100, energy + 8);
+        energyBar.style.width = energy + '%';
+      });
+      startBtn.addEventListener('click', start);
+      drawTop();
+    })();
+
+    // ======= JUEGO: RAYUELA =======
+    (function(){
+      const board = document.getElementById('rayuelaBoard');
+      const goalEl = document.getElementById('rayuelaGoal');
+      const livesEl = document.getElementById('rayuelaLives');
+      const startBtn = document.getElementById('rayuelaStart');
+
+      const layout = [
+        null, 10, null,
+         7,   8,   9,
+        null, 6, null,
+         3,   4,   5,
+      ];
+      // Render estático (números 1..10). Mapeo de posiciones por número
+      let cells = []; let posByNumber = {}; let numberByIndex = {};
+
+      function render(){
+        board.innerHTML = '';
+        cells = []; posByNumber = {}; numberByIndex = {};
+        const used = new Set();
+        // Colocamos 1 y 2 en la parte inferior para completar del 1 al 10
+        const full = [
+          null, 10, null,
+           7,   8,   9,
+          null, 6, null,
+           3,   4,   5,
+        ];
+        // Insertamos el 2 y 1 visualmente fuera del grid superior (debajo). Para simplicidad, los mostramos como textos guía.
+        
+        full.forEach((num, i)=>{
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          const text = document.createElement('span');
+          text.textContent = num? num: '';
+          cell.appendChild(text);
+          board.appendChild(cell);
+          cells[i]=cell; numberByIndex[i]=num;
+          if(num!=null){ posByNumber[num]=i; }
+        });
+      }
+
+      let playerIdx, nextTarget, stoneNumber, lives;
+
+      function placeStone(){
+        stoneNumber = 1 + Math.floor(Math.random()*10);
+        const idx = posByNumber[stoneNumber];
+        const badge = document.createElement('div'); badge.className='stone';
+        cells[idx].appendChild(badge);
+      }
+
+      function placePlayer(){
+        // Empezamos antes del 1: elegimos el 3 (es el más bajo visible). Para la mecánica: iremos del 3→10.
+        playerIdx = posByNumber[3]; nextTarget = 3; lives = 3;
+        updateHUD();
+        drawPlayer();
+      }
+
+      function drawPlayer(){
+        document.querySelectorAll('#rayuelaBoard .player').forEach(el=>el.remove());
+        const dot = document.createElement('div'); dot.className='player';
+        cells[playerIdx].appendChild(dot);
+      }
+
+      function updateHUD(){
+        goalEl.textContent = `${nextTarget} → 10`;
+        livesEl.textContent = lives;
+      }
+
+      function reset(){
+        render();
+        placeStone();
+        placePlayer();
+      }
+
+      function move(dx, dy){
+        // grid 3x4, índices 0..11
+        const x = playerIdx % 3, y = Math.floor(playerIdx/3);
+        let nx = x + dx, ny = y + dy;
+        if(nx<0||nx>2||ny<0||ny>3) { lose(); return; }
+        const nidx = ny*3 + nx;
+        if(numberByIndex[nidx]==null){ lose(); return; }
+        // Si hay piedra en el cuadro destino → pierdes intento
+        if(numberByIndex[nidx] === stoneNumber){ lose(); return; }
+        playerIdx = nidx; drawPlayer();
+        const num = numberByIndex[playerIdx];
+        if(num === nextTarget){
+          nextTarget++;
+          updateHUD();
+          if(nextTarget>10){
+            setTimeout(()=>{
+              alert('¡Ganaste la rayuela!');
+              reset();
+            }, 10);
+          }
+        }
+      }
+
+      function lose(){
+        lives--; updateHUD();
+        if(lives<=0){
+          alert('¡Sin intentos! Empezamos de nuevo.');
+          reset();
+        } else {
+          // Regresa al inicio (número 3) tras un fallo
+          playerIdx = posByNumber[3]; drawPlayer();
+        }
+      }
+
+      // Controles
+      window.addEventListener('keydown', (e)=>{
+        const k = e.key.toLowerCase();
+        if(k==='arrowleft') move(-1,0);
+        else if(k==='arrowright') move(1,0);
+        else if(k==='arrowup') move(0,-1);
+        else if(k==='arrowdown') move(0,1);
+      });
+      // Tacto: tocar una celda adyacente
+      board.addEventListener('pointerdown', (e)=>{
+        const cell = e.target.closest('.cell');
+        if(!cell) return;
+        const idx = Array.from(board.children).indexOf(cell);
+        const dx = (idx%3) - (playerIdx%3);
+        const dy = Math.floor(idx/3) - Math.floor(playerIdx/3);
+        if(Math.abs(dx)+Math.abs(dy)===1) move(dx, dy);
+      });
+
+      startBtn.addEventListener('click', reset);
+      reset();
+    })();
+
+    // ======= JUEGO: CANICAS =======
+    (function(){
+      const area = document.getElementById('canicasArea');
+      const hole = document.getElementById('canicasHole');
+      const marble = document.getElementById('canicasMarble');
+      const scoreEl = document.getElementById('canicasScore');
+      const shotsEl = document.getElementById('canicasShots');
+      const startBtn = document.getElementById('canicasStart');
+
+      let score=0, shots=3;
+      let vx=0, vy=0; let anim=null; let dragging=false; let startX=0, startY=0;
+
+      function layout(){
+        // Posicionar hoyo en un lugar aleatorio dentro del área
+        const rect = area.getBoundingClientRect();
+        const pad=40;
+        const hx = Math.random()*(rect.width-2*pad) + pad;
+        const hy = Math.random()*(rect.height-2*pad) + pad;
+        hole.style.left = (hx-30) + 'px';
+        hole.style.top = (hy-30) + 'px';
+        // Posicionar canica en la esquina inferior izquierda
+        marble.style.left = '20px';
+        marble.style.top = (rect.height-54)+'px';
+      }
+
+      function getNum(s){ return parseFloat(s.replace('px','')) }
+
+      function distance(ax, ay, bx, by){
+        const dx = ax-bx, dy = ay-by; return Math.sqrt(dx*dx + dy*dy);
+      }
+
+      function inHole(){
+        const mx = getNum(marble.style.left)+17, my = getNum(marble.style.top)+17;
+        const hx = getNum(hole.style.left)+30, hy = getNum(hole.style.top)+30;
+        return distance(mx,my,hx,hy) < 24; // radio efectivo
+      }
+
+      function tick(){
+        const x = getNum(marble.style.left), y=getNum(marble.style.top);
+        let nx = x + vx, ny = y + vy;
+        // Rebotes contra paredes
+        const rect = area.getBoundingClientRect();
+        if(nx<0){ nx=0; vx*=-0.6; }
+        if(ny<0){ ny=0; vy*=-0.6; }
+        if(nx>rect.width-34){ nx=rect.width-34; vx*=-0.6; }
+        if(ny>rect.height-34){ ny=rect.height-34; vy*=-0.6; }
+        marble.style.left = nx+'px';
+        marble.style.top = ny+'px';
+        // Fricción
+        vx *= 0.985; vy *= 0.985;
+        if(Math.abs(vx)+Math.abs(vy) < 0.15){ cancelAnimationFrame(anim); anim=null; vx=vy=0; checkEnd(); return; }
+        if(inHole()){
+          score++; scoreEl.textContent=score;
+          cancelAnimationFrame(anim); anim=null; vx=vy=0;
+          // "absorción" al hoyo
+          const hx = getNum(hole.style.left)+30, hy = getNum(hole.style.top)+30;
+          marble.style.left=(hx-17)+'px'; marble.style.top=(hy-17)+'px';
+          marble.style.transition='transform .35s'; marble.style.transform='scale(.1)';
+          setTimeout(()=>{ marble.style.transform='scale(1)'; marble.style.transition=''; nextShot(true); }, 360);
+          return;
+        }
+        anim = requestAnimationFrame(tick);
+      }
+
+      function nextShot(scored){
+        shots--; shotsEl.textContent = shots;
+        if(shots<=0){
+          setTimeout(()=>{
+            alert(`Ronda terminada. Puntuación: ${score}`);
+            reset();
+          }, 10);
+        } else {
+          // Reubica canica a origen
+          const rect = area.getBoundingClientRect();
+          marble.style.left = '20px';
+          marble.style.top = (rect.height-54)+'px';
+        }
+      }
+
+      function onPointerDown(e){
+        if(anim) return; dragging=true; marble.setPointerCapture(e.pointerId);
+        startX = e.clientX; startY = e.clientY;
+        marble.style.cursor='grabbing';
+      }
+      function onPointerMove(e){ if(!dragging) return; }
+      function onPointerUp(e){
+        if(!dragging) return; dragging=false; marble.releasePointerCapture(e.pointerId);
+        const dx = e.clientX - startX; const dy = e.clientY - startY;
+        // Fuerza inversa al arrastre (como estirar liga)
+        vx = -dx*0.07; vy = -dy*0.07;
+        shots>0 && tick();
+        marble.style.cursor='grab';
+        nextShot(false);
+      }
+
+      function reset(){ score=0; shots=3; scoreEl.textContent=score; shotsEl.textContent=shots; layout(); }
+
+      marble.addEventListener('pointerdown', onPointerDown);
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      startBtn.addEventListener('click', reset);
+      layout();
+    })();
+
+    // ======= JUEGO: BALERO (CAPIRUCHO) =======
+    (function(){
+      const marker = document.getElementById('baleroMarker');
+      const shootBtn = document.getElementById('baleroShoot');
+      const startBtn = document.getElementById('baleroStart');
+      const hitsEl = document.getElementById('baleroHits');
+      const streakEl = document.getElementById('baleroStreak');
+      const meter = document.getElementById('baleroMeter');
+
+      let pos=0, dir=1, speed=0.8; let anim=null; let hits=0, streak=0;
+
+      function frame(){
+        const w = meter.clientWidth; const px = (pos/100)*w;
+        marker.style.left = (pos+'%');
+        pos += dir*speed; if(pos>=100){ pos=100; dir=-1 } if(pos<=0){ pos=0; dir=1 }
+        anim = requestAnimationFrame(frame);
+      }
+      function start(){ if(anim) cancelAnimationFrame(anim); hits=0; streak=0; update(); pos=0; dir=1; speed=0.9; frame(); }
+      function update(){ hitsEl.textContent=hits; streakEl.textContent=streak; }
+
+      function evaluate(){
+        // Determina la zona bajo el marcador
+        const w = meter.clientWidth; const x = (pos/100)*w;
+        const zones = Array.from(meter.querySelectorAll('.zone')).map(z=>({
+          left: z.offsetLeft, right: z.offsetLeft + z.offsetWidth, cls: z.classList.contains('good')? 'good' : z.classList.contains('ok')? 'ok' : 'bad'
+        }));
+        const z = zones.find(z=> x>=z.left && x<=z.right);
+        if(!z || z.cls==='bad'){ streak=0; update(); flash('#ef4444'); return; }
+        if(z.cls==='ok'){ hits++; streak=0; update(); flash('#eab308'); return; }
+        if(z.cls==='good'){ hits++; streak++; speed = Math.min(2.2, speed+0.05); update(); flash('#22c55e'); return; }
+      }
+
+      function flash(color){
+        meter.style.boxShadow = `0 0 0 2px ${color} inset, 0 0 22px ${color}`;
+        setTimeout(()=>{ meter.style.boxShadow=''; }, 220);
+      }
+
+      shootBtn.addEventListener('click', evaluate);
+      window.addEventListener('keydown', (e)=>{ if(e.code==='Space'){ e.preventDefault(); evaluate(); }});
+      startBtn.addEventListener('click', start);
+      start();
+    })();
+  </script>
+</body>
+</html>
